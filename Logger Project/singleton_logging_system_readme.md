@@ -86,15 +86,6 @@ logger.error("Failed to connect to the database");
 
 ---
 
-## 🔧 Future Enhancements (Optional)
-- Colored console logs
-- Daily rolling log files
-- Asynchronous background logging
-- JSON log format support
-- Log filters by level
-
----
-
 ## 📚 Learning Outcome
 - Understand the **Singleton pattern** deeply and practically.
 - Know how to implement thread-safe lazy initialization.
