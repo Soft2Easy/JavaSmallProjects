@@ -1,0 +1,12 @@
+{
+    "java.project.sourcePaths": [
+        "src/main/java"
+    ],
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-25",
+            "path": "C:\\Users\\raleh\\AppData\\Roaming\\Code\\User\\globalStorage\\pleiades.java-extension-pack-jdk\\java\\latest",
+            "default": true
+        }
+    ]
+}

@@ -1,0 +1,5 @@
+[2025-11-17 22:33:00][INFO] Application started
+[2025-11-17 22:33:00][DEBUG] Loading user data...
+[2025-11-17 22:33:00][WARNING] Low memory warning
+[2025-11-17 22:33:00][ERROR] Failed to open database connection
+[2025-11-17 22:33:00][INFO] Logger2 is the same instance as Logger
