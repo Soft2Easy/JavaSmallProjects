@@ -12,7 +12,7 @@ The purpose of this project is to:
 - Demonstrate how Singleton ensures **one shared logger instance** across an entire application.
 - Provide a foundation for studying **creational design patterns** and building a portfolio-ready project.
 
-This project also teaches:
+This project also touches:
 - Thread-safe lazy initialization
 - File-based logging
 - Log formatting with timestamps and levels
@@ -86,17 +86,7 @@ logger.error("Failed to connect to the database");
 
 ---
 
-## 🔧 Future Enhancements (Optional)
-- Colored console logs
-- Daily rolling log files
-- Asynchronous background logging
-- JSON log format support
-- Log filters by level
-
----
-
 ## 📚 Learning Outcome
-By completing this project, you will:
 - Understand the **Singleton pattern** deeply and practically.
 - Know how to implement thread-safe lazy initialization.
 - Gain experience with file I/O in Java.
@@ -106,6 +96,4 @@ By completing this project, you will:
 
 ## 👤 Author
 Katlego Ralehlaka
-
-Created for Java design pattern practice and mastery.
 
