@@ -1,5 +1,6 @@
 package com.application.config;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.context.annotation.Bean;
@@ -7,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -16,54 +17,76 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-
+ 
 @Configuration
 public class SecurityConfig {
-
-    public SecurityConfig() {
-        System.out.println("SecurityConfig loaded!");
-    }
-    
-    @Bean
+	 
+	@Bean
     UserDetailsService userDetailsService() {
         UserDetails admin = User.withUsername("admin")
                 .password("{noop}admin123")
                 .roles("ADMIN")
                 .build();
 
-                UserDetails applicant = User.withUsername("user")
+        UserDetails applicant = User.withUsername("user")
                 .password("{noop}user123")
                 .roles("APPLICANT")
                 .build();
 
         return new InMemoryUserDetailsManager(admin, applicant);
     }
+	
+	@Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http,JwtAuthFilter jwtAuthFilter) throws Exception { 
+		return http
+				.cors(Customizer.withDefaults())
+	            .csrf(csrf -> csrf.disable())
+	            .authorizeHttpRequests(auth -> auth
+	                .requestMatchers(HttpMethod.POST, "/api/jobs").hasRole("ADMIN")
+	                .requestMatchers(HttpMethod.GET, "/api/jobs/all").permitAll()
+	                .requestMatchers(HttpMethod.POST, "/api/application/apply/**")
+	                										.hasRole("APPLICANT")
+	                .requestMatchers(HttpMethod.POST, "/api/auth/login").authenticated()
+	                .requestMatchers("/oauth/**", "/login/**", "/oauth2/**", "/api/oauth/**").permitAll() //Allow OAuth endpoints
+	                .requestMatchers(HttpMethod.GET,"/api/auth/details").permitAll()
+	                .anyRequest().authenticated()
+	            )
+	            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+	            .httpBasic(Customizer.withDefaults()) 
+	            //.oauth2Login(Customizer.withDefaults()) //Enable Google OAuth login
+	            .oauth2Login(oauth -> oauth
+	            	    .userInfoEndpoint(userInfo -> userInfo
+	            	        .userService(userRequest -> {
+	            	            var delegate = new DefaultOAuth2UserService();
+	            	            var oauth2User = delegate.loadUser(userRequest);
 
-    @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
-        
-        return http.csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/jobs").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET,"/api/jobs/all").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/application/apply/**").hasRole("APPLICANT")
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").authenticated()
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .httpBasic(Customizer.withDefaults())
-                .oauth2Login(oauth -> oauth
-                    .userInfoEndpoint(userInfo -> userInfo
-                        .userService(UserRequest -> {
-                            var delegate = new DefaultOAuth2UserService();
-                            var oAuth2User = delegate.loadUser(UserRequest);
+	            	            // Assign ROLE_APPLICANT to every OAuth user
+	            	            return new DefaultOAuth2User(
+	            	                List.of(new SimpleGrantedAuthority("ROLE_APPLICANT")),
+	            	                oauth2User.getAttributes(),
+	            	                "email"
+	            	            );
+	            	        })
+	            	    )
+	            	)
 
-                            return new DefaultOAuth2User(
-                                List.of(new SimpleGrantedAuthority("ROLE_APPLICANT")),
-                                oAuth2User.getAttributes(),
-                                "email");
-                        })))
-                .build();
+	            .build();
+     }
+	
+	@Bean
+    UrlBasedCorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }

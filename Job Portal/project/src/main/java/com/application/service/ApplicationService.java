@@ -4,32 +4,39 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.application.model.Application;
+import com.application.model.Job;
 import com.application.model.User;
 import com.application.repository.ApplicationRepository;
 import com.application.repository.JobRepository;
 import com.application.repository.UserRepository;
 
+
 @Service
 public class ApplicationService {
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private JobRepository jobRepository;
-
-    @Autowired
-    private ApplicationRepository applicationRepository;
-    
-
-    public Application applyForJob(Long userId, Long jobId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found "));
-                
-        com.application.model.Job job = jobRepository.findById(jobId)
-                .orElseThrow(() -> new RuntimeException("Job not found "));
-
-        Application application = new Application(user, job);
-        return applicationRepository.save(application);
-    }
+	
+	@Autowired
+	private UserRepository userRepository;
+	
+	@Autowired
+	private JobRepository jobRepository;
+	
+	@Autowired
+	private ApplicationRepository applicationRepository;
+	
+	
+	public Application applyForJob(String username, Long jobId) {
+	    /* Fetch User object using userId or throw exception */
+		User user = userRepository.findByEmail(username)
+	        .orElseThrow(() -> new RuntimeException("User not found"));
+		
+		/* Fetch Job object using jobId or throw exception */
+	    Job job = jobRepository.findById(jobId)
+	        .orElseThrow(() -> new RuntimeException("Job not found"));
+	    
+	    /* Attach User and Job details to Application object */
+	    Application application = new Application(user, job);
+	    
+	    /* Save it in DB using save() method of JpaRepository */
+	    return applicationRepository.save(application);
+	}
 }

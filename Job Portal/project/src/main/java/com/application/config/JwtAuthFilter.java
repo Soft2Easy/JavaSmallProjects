@@ -19,42 +19,52 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Component
-public class JwtAuthFilter extends OncePerRequestFilter {
+public class JwtAuthFilter  extends OncePerRequestFilter{
 
-    @Autowired
+	@Autowired
     private JwtUtil jwtUtil;
 
     @Autowired
     private UserDetailsService userDetailsService;
+    
+	@Override
+	protected void doFilterInternal(HttpServletRequest request, 
+			HttpServletResponse response, 
+			FilterChain filterChain)
+			throws ServletException, IOException {
+		//Check if the request has Authorization header 
+		final String authHeader = request.getHeader("Authorization");
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-        final String authHeader = request.getHeader("Authorization");
         String token = null;
         String username = null;
-
+        
+        //Read token from Bearer header
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
             try {
+            	//Extract the username/email
                 username = jwtUtil.extractEmail(token);
             } catch (Exception e) {
-                System.out.println("Invalid JWT Token :" + e.getMessage());
+                System.out.println("Invalid token: " + e.getMessage());
             }
         }
 
-        if(username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-            if (jwtUtil.validToken(token, userDetails.getUsername())) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
+            //Check if token is valid 
+            if (jwtUtil.validateToken(token, userDetails.getUsername())) {
+            	//Setting authentication in Spring Security context
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                //Set authentication
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
-
         filterChain.doFilter(request, response);
-    }
-    
+	}
+	
+	
 }
- 
